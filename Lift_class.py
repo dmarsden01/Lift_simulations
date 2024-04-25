@@ -91,7 +91,7 @@ class Lift_timesteps(object):
         print(f"Current velocity is {str(self.velocity)}.")
 
     def Calculate_distance(self, time_units=1):
-        distance = self.velocity*time_units + 0.5*self.acceleration*time_units**2
+        distance = self.velocity*time_units + 0.5*self.acceleration*(time_units**2)
 
         return distance
     
@@ -102,13 +102,19 @@ class Lift_timesteps(object):
     def Check_floor(self): #Need to tell it to go.
         if (self.acceleration == 0) and (self.velocity == 0):
             if self.target_floor != None:
-                if self.location > self.target_floor:
-                    self.acceleration = self.N_terminal/self.terminal_vel**2
-                elif self.location < self.target_floor:
-                    self.acceleration = -1*self.N_terminal/self.terminal_vel**2
+                if self.location < self.target_floor:
+                    # self.acceleration = self.N_terminal/(self.terminal_vel**2) #don't know where I got this from
+                    self.acceleration = self.terminal_vel**2/(2*self.N_terminal)
+                elif self.location > self.target_floor:
+                    # self.acceleration = -1*self.N_terminal/(self.terminal_vel**2) #don't know where I got this from
+                    self.acceleration = -1*self.terminal_vel**2/(2*self.N_terminal)
+
+    def Check_stop(self):
+        if self.target_floor == self.location:
+            self.velocity = 0
 
     def Update_position(self, distance):
-        if self.target_floor != None:
+        if self.target_floor is not None:
             distance_to_go = self.target_floor - self.location
 
             if abs(distance_to_go) <= abs(distance): #distance can be negative
@@ -127,10 +133,12 @@ class Lift_timesteps(object):
 
     def Perform_timestep(self, time_steps):
         self.Check_floor()
-        distance_calc = self.Calculate_distance(time_units=time_steps)
+        distance_calc = self.Calculate_distance(time_steps)
+        # print(f"distance to go: {distance_calc}")
         self.Update_position(distance_calc)
         self.Update_velocity_acc(time_steps)
 
+        self.Check_stop()
         # self.Update_target()
 
         self.timesteps +=1
